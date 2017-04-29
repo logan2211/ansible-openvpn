@@ -1,0 +1,74 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Ensure the openvpn key directory exists
+  file:
+    name: "{{ openvpn_key_path }}"
+    state: directory
+    mode: '0700'
+
+- name: Drop the openssl extensions
+  copy:
+    src: openssl-extensions.cnf
+    dest: "{{ openvpn_key_path }}/openssl-extensions.cnf"
+    owner: root
+    group: root
+
+- name: Drop the CA cert if provided
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ openvpn_key_path }}/{{ item.filename }}"
+    owner: root
+    group: root
+    mode: "{{ item.mode }}"
+  with_items:
+    - content: "{{ openvpn_ca_cert.cert }}"
+      filename: ca.crt
+      mode: '0644'
+    - content: "{{ openvpn_ca_cert.key }}"
+      filename: ca.key
+      mode: '0600'
+  when: openvpn_ca_cert is defined
+
+# Generate the CA cert/key if not provided
+- include: openvpn_keys_ca.yml
+  when:
+    - openvpn_ca_cert is not defined
+
+- include: openvpn_keys_server.yml
+
+- name: Drop the TLS auth key
+  copy:
+    content: "{{ openvpn_tls_auth_key }}"
+    dest: "{{ openvpn_key_path }}/tls-auth.key"
+    owner: root
+    group: root
+    mode: '0600'
+  when: openvpn_tls_auth_key is defined
+
+- name: Generate the TLS auth key
+  command: "openvpn --genkey --secret {{ openvpn_key_path }}/tls-auth.key"
+  args:
+    creates: "{{ openvpn_key_path }}/tls-auth.key"
+  changed_when: false
+  when: openvpn_tls_auth_key is not defined
+
+- name: Generate DH params
+  command: openssl dhparam -out {{ openvpn_key_path }}/dh.pem {{ openvpn_rsa_bits }}
+  args:
+    creates: "{{ openvpn_key_path }}/dh.pem"
+  changed_when: false
+
+- include: openvpn_keys_client.yml

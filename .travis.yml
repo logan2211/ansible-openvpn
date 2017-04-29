@@ -1,0 +1,60 @@
+language: python
+services:
+  - docker
+env:
+  global:
+    - run_opts="-u root --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/net/tun"
+  matrix:
+    # LINTERS
+    - >
+      toxenv=linters
+      tag=ubuntu-xenial
+      image=logan2211/docker-ci
+      init=/lib/systemd/systemd
+    # ANSIBLE 2.1
+    - >
+      toxenv=functional_2.1
+      tag=ubuntu-xenial
+      image=logan2211/docker-ci
+      init=/lib/systemd/systemd
+    - >
+      toxenv=functional_2.1
+      tag=centos-7
+      image=logan2211/docker-ci
+      init=/usr/lib/systemd/systemd
+    # ANSIBLE 2.2
+    - >
+      toxenv=functional_2.2
+      tag=ubuntu-xenial
+      image=logan2211/docker-ci
+      init=/lib/systemd/systemd
+    - >
+      toxenv=functional_2.2
+      tag=centos-7
+      image=logan2211/docker-ci
+      init=/usr/lib/systemd/systemd
+    # ANSIBLE stable (2.3+)
+    - >
+      toxenv=functional_stable
+      tag=ubuntu-xenial
+      image=logan2211/docker-ci
+      init=/lib/systemd/systemd
+    - >
+      toxenv=functional_stable
+      tag=centos-7
+      image=logan2211/docker-ci
+      init=/usr/lib/systemd/systemd
+before_install:
+  - 'docker pull ${image}:${tag}'
+script:
+  # Create a random file to store the container ID.
+  - container_id=$(mktemp)
+  - 'docker run --detach --volume="${PWD}":/opt/ansiblerole:rw ${run_opts} ${image}:${tag} "${init}" > "${container_id}"'
+  - >
+    docker exec "$(cat ${container_id})"
+    env TERM=xterm
+    env ANSIBLE_FORCE_COLOR=1
+    env toxenv=${toxenv}
+    bash -c 'set -ex; \
+      pushd /opt/ansiblerole; \
+      tox -e ${toxenv}'

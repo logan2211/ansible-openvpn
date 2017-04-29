@@ -1,0 +1,48 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Generate CA key
+  command: >
+    openssl req
+    -nodes
+    -newkey
+    rsa:{{ openvpn_rsa_bits }}
+    -keyout {{ openvpn_key_path }}/ca.key
+    -out {{ openvpn_key_path }}/ca.csr
+    -days {{ openvpn_ca_cert_days }}
+    -subj /CN=OpenVPN-CA-{{inventory_hostname}}/
+  args:
+    creates: "{{ openvpn_key_path }}/ca.csr"
+  changed_when: false
+
+- name: Set permissions on the CA key
+  file:
+    path: "{{ openvpn_key_path }}/ca.key"
+    mode: '0600'
+
+- name: Sign the CA cert
+  command: >
+    openssl x509 -req
+    -in {{ openvpn_key_path }}/ca.csr
+    -out {{ openvpn_key_path }}/ca.crt
+    -signkey {{ openvpn_key_path }}/ca.key
+    -CAcreateserial
+    -sha256
+    -days {{ openvpn_ca_cert_days }}
+    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
+    -extensions ca
+  args:
+    creates: "{{ openvpn_key_path }}/ca.crt"
+  changed_when: false

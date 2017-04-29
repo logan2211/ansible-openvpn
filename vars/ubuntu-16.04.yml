@@ -1,0 +1,43 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+## APT Cache Options
+cache_timeout: 600
+
+# GPG Keys
+openvpn_gpg_keys:
+  - key_name: 'openvpn'
+    keyserver: 'hkp://keyserver.ubuntu.com:80'
+    fallback_keyserver: 'hkp://p80.pool.sks-keyservers.net:80'
+    hash_id: '0x8E6DA8B4E158C569'
+
+# Packages
+openvpn_required_distro_packages:
+  - debconf-utils
+
+openvpn_distro_packages:
+  - openvpn
+  - openssl
+
+openvpn_user: nobody
+openvpn_group: nogroup
+
+# Repositories
+openvpn_repo_version: stable
+openvpn_repo_url: "http://build.openvpn.net/debian/openvpn/{{ openvpn_repo_version }}"
+openvpn_repo:
+  repo: "deb {{ openvpn_repo_url }} {{ ansible_distribution_release }} main"
+  state: present
+  filename: OpenVPN

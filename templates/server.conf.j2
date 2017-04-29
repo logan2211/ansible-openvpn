@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+
+{% set openvpn_config = openvpn_server_config %}
+{# Set dual stack if needed #}
+{% if openvpn_listen_ipv6 == 'exclusive' %}
+{%   set _ = openvpn_config.update({ 'proto': openvpn_protocol ~ '6' }) %}
+{% elif openvpn_listen_ipv6 | bool %}
+{%   set _ = openvpn_config.update({ 'proto': [ openvpn_protocol, openvpn_protocol ~ '6' ]}) %}
+{% endif %}
+{% set _ = openvpn_config.update(openvpn_server_config_overrides) %}
+
+{% for i in openvpn_config | dictsort %}
+{%   set key = i.0 %}
+{%   set item = i.1 %}
+{%   if item is iterable and item is not string %}
+{#     The key is a list so we output multiple config items with the same key #}
+{%     for inner_item in item %}
+{{ key }} {{ inner_item }}
+{%     endfor %}
+{%   else %}
+{{ key }} {{ item }}
+{%   endif %}
+{% endfor %}

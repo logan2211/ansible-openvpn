@@ -1,0 +1,64 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Create a list of client keys to generate
+  set_fact:
+    openvpn_clients_generate: >-
+      {% set _var = [] -%}
+      {% for item in openvpn_clients -%}
+      {%   if item is string -%}
+      {%     set _ = _var.append(item) -%}
+      {%   elif not item.revoke | default('no') | bool
+                and item.cert is not defined -%}
+      {%     set _ = _var.append(item.name) -%}
+      {%   endif -%}
+      {% endfor -%}
+      {{ _var }}
+
+- name: Generate the openvpn client keys
+  command: >
+    openssl req
+    -nodes
+    -newkey
+    rsa:{{ openvpn_rsa_bits }}
+    -keyout {{ openvpn_key_path }}/{{ item }}.key
+    -out {{ openvpn_key_path }}/{{ item }}.csr
+    -days {{ openvpn_client_cert_days }}
+    -subj /CN=OpenVPN-Client-{{ inventory_hostname }}/
+  args:
+    creates: "{{ openvpn_key_path }}/{{ item }}.csr"
+  with_items: "{{ openvpn_clients_generate }}"
+  changed_when: false
+
+- name: Set permissions on the generated client keys
+  file:
+    path: "{{ openvpn_key_path }}/{{ item }}.key"
+    mode: '0600'
+  with_items: "{{ openvpn_clients_generate }}"
+
+- name: Sign the openvpn client certs
+  command: >
+    openssl x509 -req -sha256
+    -in {{ openvpn_key_path }}/{{ item }}.csr
+    -out {{ openvpn_key_path }}/{{ item }}.crt
+    -CA {{ openvpn_key_path }}/ca.crt
+    -CAkey {{ openvpn_key_path }}/ca.key
+    -days {{ openvpn_server_cert_days }}
+    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
+    -extensions client
+  args:
+    creates: "{{ openvpn_key_path }}/{{ item }}.crt"
+  with_items: "{{ openvpn_clients_generate }}"
+  changed_when: false
