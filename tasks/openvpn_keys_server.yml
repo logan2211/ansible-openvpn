@@ -1,0 +1,48 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Generate the openvpn server key
+  command: >
+    openssl req
+    -nodes
+    -newkey
+    rsa:{{ openvpn_rsa_bits }}
+    -keyout {{ openvpn_key_path }}/server.key
+    -out {{ openvpn_key_path }}/server.csr
+    -days {{ openvpn_server_cert_days }}
+    -subj /CN=OpenVPN-Server-{{inventory_hostname}}/
+  args:
+    creates: "{{ openvpn_key_path }}/server.csr"
+  changed_when: false
+
+- name: Set permissions on the server key
+  file:
+    path: "{{ openvpn_key_path }}/server.key"
+    mode: '0600'
+
+- name: Sign the openvpn server cert
+  command: >
+    openssl x509 -req -sha256
+    -in {{ openvpn_key_path }}/server.csr
+    -out {{ openvpn_key_path }}/server.crt
+    -CA {{ openvpn_key_path }}/ca.crt
+    -CAkey {{ openvpn_key_path }}/ca.key
+    -CAcreateserial
+    -days {{ openvpn_server_cert_days }}
+    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
+    -extensions server
+  args:
+    creates: "{{ openvpn_key_path }}/server.crt"
+  changed_when: false
