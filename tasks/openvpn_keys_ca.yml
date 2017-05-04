@@ -17,14 +17,16 @@
   command: >
     openssl req
     -nodes
+    -x509
     -newkey
     rsa:{{ openvpn_rsa_bits }}
     -keyout {{ openvpn_key_path }}/ca.key
-    -out {{ openvpn_key_path }}/ca.csr
+    -out {{ openvpn_key_path }}/ca.crt
     -days {{ openvpn_ca_cert_days }}
+    -sha256
     -subj /CN=OpenVPN-CA-{{inventory_hostname}}/
   args:
-    creates: "{{ openvpn_key_path }}/ca.csr"
+    creates: "{{ openvpn_key_path }}/ca.crt"
   changed_when: false
 
 - name: Set permissions on the CA key
@@ -32,17 +34,25 @@
     path: "{{ openvpn_key_path }}/ca.key"
     mode: '0600'
 
-- name: Sign the CA cert
-  command: >
-    openssl x509 -req
-    -in {{ openvpn_key_path }}/ca.csr
-    -out {{ openvpn_key_path }}/ca.crt
-    -signkey {{ openvpn_key_path }}/ca.key
-    -CAcreateserial
-    -sha256
-    -days {{ openvpn_ca_cert_days }}
-    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
-    -extensions ca
+- name: Create the index.txt and CRL files
+  file:
+    path: "{{ item }}"
+    state: touch
+    owner: root
+    group: root
+  with_items:
+    - "{{ openvpn_key_path }}/index.txt"
+    - "{{ openvpn_key_path }}/ca.crl"
+
+- name: Create the serial and crl numbers
+  shell: "{{ item.command }}"
   args:
-    creates: "{{ openvpn_key_path }}/ca.crt"
+    creates: "{{ item.creates }}"
   changed_when: false
+  with_items:
+    - command: "echo 01 > {{ openvpn_key_path }}/serial"
+      creates: "{{ openvpn_key_path }}/serial"
+    - command: "echo 01 > {{ openvpn_key_path }}/crlnumber"
+      creates: "{{ openvpn_key_path }}/crlnumber"
+  tags:
+    - skip_ansible_lint

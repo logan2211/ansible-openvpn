@@ -20,9 +20,9 @@
     mode: '0700'
 
 - name: Drop the openssl extensions
-  copy:
-    src: openssl-extensions.cnf
-    dest: "{{ openvpn_key_path }}/openssl-extensions.cnf"
+  template:
+    src: openssl.cnf.j2
+    dest: "{{ openvpn_key_path }}/openssl.cnf"
     owner: root
     group: root
 

@@ -26,6 +26,15 @@
       {%   endif -%}
       {% endfor -%}
       {{ _var }}
+    openvpn_clients_revoke: >-
+      {% set _var = [] -%}
+      {% for item in openvpn_clients -%}
+      {%   if item is not string
+              and item.revoke | default('no') | bool -%}
+      {%     set _ = _var.append(item.name) -%}
+      {%   endif -%}
+      {% endfor -%}
+      {{ _var }}
 
 - name: Generate the openvpn client keys
   command: >
@@ -36,7 +45,7 @@
     -keyout {{ openvpn_key_path }}/{{ item }}.key
     -out {{ openvpn_key_path }}/{{ item }}.csr
     -days {{ openvpn_client_cert_days }}
-    -subj /CN=OpenVPN-Client-{{ inventory_hostname }}/
+    -subj /CN=OpenVPN-Client-{{ inventory_hostname }}-{{ item }}/
   args:
     creates: "{{ openvpn_key_path }}/{{ item }}.csr"
   with_items: "{{ openvpn_clients_generate }}"
@@ -50,15 +59,34 @@
 
 - name: Sign the openvpn client certs
   command: >
-    openssl x509 -req -sha256
+    openssl ca -batch
+    -config {{ openvpn_key_path }}/openssl.cnf
     -in {{ openvpn_key_path }}/{{ item }}.csr
     -out {{ openvpn_key_path }}/{{ item }}.crt
-    -CA {{ openvpn_key_path }}/ca.crt
-    -CAkey {{ openvpn_key_path }}/ca.key
-    -days {{ openvpn_server_cert_days }}
-    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
+    -days {{ openvpn_client_cert_days }}
     -extensions client
   args:
     creates: "{{ openvpn_key_path }}/{{ item }}.crt"
   with_items: "{{ openvpn_clients_generate }}"
+  changed_when: false
+
+- name: Perform openvpn certificate revocation
+  command: >
+    openssl ca
+    -config {{ openvpn_key_path }}/openssl.cnf
+    -revoke {{ openvpn_key_path }}/{{ item }}.crt
+  with_items: "{{ openvpn_clients_revoke }}"
+  register: cert_revoke
+  changed_when: cert_revoke.rc == 0
+  failed_when:
+    - cert_revoke.rc == 1
+    - "'Already revoked' not in cert_revoke.stdout"
+
+- name: Update the CRL file
+  command: >
+    openssl ca
+    -config {{ openvpn_key_path }}/openssl.cnf
+    -gencrl
+    -out {{ openvpn_key_path }}/ca.crl
+  when: cert_revoke | changed
   changed_when: false
