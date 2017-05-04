@@ -1,60 +1,58 @@
 language: python
+# Test this later.
+cache:
+  timeout: 3600
+  pip: true
+  directories:
+    - $HOME/.docker
+# cache: pip
 services:
   - docker
 env:
   global:
-    - run_opts="-u root --privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro --cap-add NET_ADMIN --cap-add SYS_ADMIN --device /dev/net/tun"
+    - ANSIBLE_FORCE_COLOR=1
+    - docker_image=logan2211/docker-ci
+    - docker_command=/lib/systemd/systemd
+    - cache_dir=$HOME/.docker
   matrix:
-    # LINTERS
+    - TOXENV=linters
+      CACHE_NAME=linters
     - >
-      toxenv=linters
-      tag=ubuntu-xenial
-      image=logan2211/docker-ci
-      init=/lib/systemd/systemd
-    # ANSIBLE 2.1
+      TOXENV=functional_2.1
+      docker_image_tag=ubuntu-xenial
+      CACHE_NAME=xenial
     - >
-      toxenv=functional_2.1
-      tag=ubuntu-xenial
-      image=logan2211/docker-ci
-      init=/lib/systemd/systemd
+      TOXENV=functional_2.1
+      docker_image_tag=centos-7
+      CACHE_NAME=cent7
     - >
-      toxenv=functional_2.1
-      tag=centos-7
-      image=logan2211/docker-ci
-      init=/usr/lib/systemd/systemd
-    # ANSIBLE 2.2
+      TOXENV=functional_2.2
+      docker_image_tag=ubuntu-xenial
+      CACHE_NAME=xenial
     - >
-      toxenv=functional_2.2
-      tag=ubuntu-xenial
-      image=logan2211/docker-ci
-      init=/lib/systemd/systemd
+      TOXENV=functional_2.2
+      docker_image_tag=centos-7
+      CACHE_NAME=cent7
     - >
-      toxenv=functional_2.2
-      tag=centos-7
-      image=logan2211/docker-ci
-      init=/usr/lib/systemd/systemd
-    # ANSIBLE stable (2.3+)
+      TOXENV=functional_stable
+      docker_image_tag=ubuntu-xenial
+      CACHE_NAME=xenial
     - >
-      toxenv=functional_stable
-      tag=ubuntu-xenial
-      image=logan2211/docker-ci
-      init=/lib/systemd/systemd
-    - >
-      toxenv=functional_stable
-      tag=centos-7
-      image=logan2211/docker-ci
-      init=/usr/lib/systemd/systemd
+      TOXENV=functional_stable
+      docker_image_tag=centos-7
+      CACHE_NAME=cent7
 before_install:
-  - 'docker pull ${image}:${tag}'
+  # Load cached docker images
+  - if [[ -d ${cache_dir} ]]; then ls ${cache_dir}/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
+  - if [[ -n ${docker_image_tag} ]]; then docker pull ${docker_image}:${docker_image_tag}; fi
+install:
+  - pip install tox
 script:
-  # Create a random file to store the container ID.
-  - container_id=$(mktemp)
-  - 'docker run --detach --volume="${PWD}":/opt/ansiblerole:rw ${run_opts} ${image}:${tag} "${init}" > "${container_id}"'
+  - tox
+before_cache:
+  # Save tagged docker images
   - >
-    docker exec "$(cat ${container_id})"
-    env TERM=xterm
-    env ANSIBLE_FORCE_COLOR=1
-    env toxenv=${toxenv}
-    bash -c 'set -ex; \
-      pushd /opt/ansiblerole; \
-      tox -e ${toxenv}'
+    mkdir -p ${cache_dir} && docker images -a --filter='dangling=false' --format '{{.Repository}}:{{.Tag}} {{.ID}}'
+    | xargs -n 2 -t sh -c 'test -e ${cache_dir}/$1.tar.gz || docker save $0 | gzip -2 > ${cache_dir}/$1.tar.gz'
+notifications:
+  email: false

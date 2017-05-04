@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- include: test-create-containers.yml
+
 - name: Playbook for role testing
-  hosts: localhost
-  connection: local
+  hosts: openvpn_servers
   pre_tasks:
     - name: Ensure the openvpn key directory exists
       file:
