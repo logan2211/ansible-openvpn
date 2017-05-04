@@ -34,14 +34,11 @@
 
 - name: Sign the openvpn server cert
   command: >
-    openssl x509 -req -sha256
+    openssl ca -batch
+    -config {{ openvpn_key_path }}/openssl.cnf
     -in {{ openvpn_key_path }}/server.csr
     -out {{ openvpn_key_path }}/server.crt
-    -CA {{ openvpn_key_path }}/ca.crt
-    -CAkey {{ openvpn_key_path }}/ca.key
-    -CAcreateserial
     -days {{ openvpn_server_cert_days }}
-    -extfile {{ openvpn_key_path }}/openssl-extensions.cnf
     -extensions server
   args:
     creates: "{{ openvpn_key_path }}/server.crt"
