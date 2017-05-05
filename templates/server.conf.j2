@@ -18,6 +18,7 @@
 {{ key }} {{ inner_item }}
 {%     endfor %}
 {%   else %}
-{{ key }} {{ item }}
+{{ key }}{% if item != '' %} {{ item }}{% endif %}
+
 {%   endif %}
 {% endfor %}

@@ -64,8 +64,9 @@ openvpn_client_cert_days: "{{ openvpn_cert_days }}"
 openvpn_ipv4_network: 192.168.250.0/24
 
 # Verify the CN of the client
-openvpn_verify_cn: no
-openvpn_verify_x509_name: "OpenVPN-Client-{{inventory_hostname}} name-prefix"
+openvpn_verify_cn_enabled: no
+openvpn_verify_cn_client: "OpenVPN-Client-{{inventory_hostname}} name-prefix"
+openvpn_verify_cn_server: "OpenVPN-Server-{{inventory_hostname}} name"
 
 # Configure the OpenVPN management socket
 openvpn_management_enabled: yes
@@ -83,6 +84,10 @@ openvpn_management_user: root
 #     key: <pregenerated key> (not stored on the server, only used to generate the client config)
 openvpn_clients: []
 
+# Enables generation of .ovpn client configurations for managed clients
+openvpn_clients_config_generate: yes
+openvpn_clients_config_path: "{{ openvpn_key_path }}"
+
 openvpn_server_config:
   port: "{{ openvpn_port }}"
   proto: "{{ openvpn_protocol }}"
@@ -91,7 +96,7 @@ openvpn_server_config:
   cert: "{{ openvpn_key_path }}/server.crt"
   key: "{{ openvpn_key_path }}/server.key"
   dh: "{{ openvpn_key_path }}/dh.pem"
-  tls-auth: "{{ openvpn_key_path }}/tls-auth.key"
+  tls-auth: "{{ openvpn_key_path }}/tls-auth.key 0"
   crl-verify: "{{ openvpn_key_path }}/ca.crl"
   tls-server: ''
   auth: SHA256
@@ -105,13 +110,34 @@ openvpn_server_config:
   group: "{{ openvpn_group }}"
   status: "{{ openvpn_status_file }}"
   verb: 3
-  verify-x509-name: "{{ openvpn_verify_x509_name if (openvpn_verify_cn | bool) else [] }}"
-  remote-cert-tls: "{{ 'client' if (openvpn_verify_cn | bool) else [] }}"
+  verify-x509-name: "{{ openvpn_verify_cn_client if (openvpn_verify_cn_enabled | bool) else [] }}"
+  remote-cert-tls: client
+  tls-version-min: 1.2
   management: "{{ openvpn_management_bind if (openvpn_management_enabled | bool) else [] }}"
   management-client-user: "{{ openvpn_management_user if (openvpn_management_enabled | bool) else [] }}"
 
-openvpn_client_config: {}
+openvpn_client_config:
+  client: ''
+  proto: "{{ openvpn_protocol }}"
+  remote: "{{ ansible_host }} {{ openvpn_port }}"
+  auth: SHA256
+  cipher: AES-256-CBC
+  dev: tun
+  remote-cert-tls: server
+  tls-version-min: 1.2
+  resolv-retry: infinite
+  nobind: ''
+  keepalive: '5 30'
+  comp-lzo: ''
+  persist-key: ''
+  persist-tun: ''
+  key-direction: 1
+  verb: 3
+  verify-x509-name: "{{ openvpn_verify_cn_server if (openvpn_verify_cn_enabled | bool) else [] }}"
 
 # Configure settings in this dict to override the base configuration.
+# NOTE(logan): An empty list ie. [] is excluded from the config.
+# NOTE(logan): An empty string is outputted as a key-only var with no
+#              parameter in the config.
 openvpn_server_config_overrides: {}
 openvpn_client_config_overrides: {}

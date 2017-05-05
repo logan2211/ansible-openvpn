@@ -40,6 +40,8 @@
     state: touch
     owner: root
     group: root
+  notify:
+    - Update the CRL
   with_items:
     - "{{ openvpn_key_path }}/index.txt"
     - "{{ openvpn_key_path }}/ca.crl"

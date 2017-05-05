@@ -77,16 +77,9 @@
     -revoke {{ openvpn_key_path }}/{{ item }}.crt
   with_items: "{{ openvpn_clients_revoke }}"
   register: cert_revoke
+  notify:
+    - Update the CRL
   changed_when: cert_revoke.rc == 0
   failed_when:
     - cert_revoke.rc == 1
     - "'Already revoked' not in cert_revoke.stdout"
-
-- name: Update the CRL file
-  command: >
-    openssl ca
-    -config {{ openvpn_key_path }}/openssl.cnf
-    -gencrl
-    -out {{ openvpn_key_path }}/ca.crl
-  when: cert_revoke | changed
-  changed_when: false

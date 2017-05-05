@@ -1,0 +1,47 @@
+---
+# Copyright 2017, Logan Vig <logan2211@gmail.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+- name: Store CA key
+  slurp:
+    src: "{{ openvpn_key_path }}/ca.crt"
+  register: ca_cert
+
+- name: Store tls-auth key
+  slurp:
+    src: "{{ openvpn_key_path }}/tls-auth.key"
+  register: tls_auth_key
+
+- name: Store client certificates
+  slurp:
+    src: "{{ openvpn_key_path }}/{{ item }}.crt"
+  register: client_certs
+  with_items: "{{ openvpn_clients_generate }}"
+
+- name: Store client keys
+  slurp:
+    src: "{{ openvpn_key_path }}/{{ item }}.key"
+  register: client_keys
+  with_items: "{{ openvpn_clients_generate }}"
+
+- name: Generate client configurations
+  template:
+    src: client.ovpn.j2
+    dest: "{{ openvpn_clients_config_path }}/{{ item.0.item }}.ovpn"
+    owner: root
+    group: root
+    mode: '0600'
+  with_together:
+    - "{{ client_certs.results }}"
+    - "{{ client_keys.results }}"
