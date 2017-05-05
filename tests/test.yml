@@ -16,6 +16,17 @@
 - name: Playbook for role testing
   hosts: localhost
   connection: local
+  pre_tasks:
+    - name: Ensure the openvpn key directory exists
+      file:
+        name: "{{ openvpn_key_path }}"
+        state: directory
+        mode: '0700'
+    - name: Drop the pregenerated DH params
+      copy:
+        src: dh.pem
+        dest: "{{ openvpn_key_path }}/dh.pem"
+      when: test_openvpn_use_pregenerated_dh | default('no') | bool
   roles:
     - role: "{{ rolename | basename }}"
   post_tasks:
