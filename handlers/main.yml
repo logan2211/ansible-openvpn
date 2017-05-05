@@ -13,6 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+- name: Update the CRL
+  command: >
+    openssl ca
+    -config {{ openvpn_key_path }}/openssl.cnf
+    -gencrl
+    -out {{ openvpn_key_path }}/ca.crl
+  changed_when: false
+
 - name: Restart OpenVPN
   service:
     name: "{{ openvpn_systemd_unit }}"

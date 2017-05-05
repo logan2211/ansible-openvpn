@@ -1,0 +1,33 @@
+# {{ ansible_managed }}
+
+{% set _ = openvpn_client_config.update(openvpn_client_config_overrides) %}
+
+{% for i in openvpn_client_config | dictsort %}
+{%   set key = i.0 %}
+{%   set param = i.1 %}
+{%   if param is iterable and param is not string %}
+{#     The key is a list so we output multiple config items with the same key #}
+{%     for inner_param in param %}
+{{ key }} {{ inner_param }}
+{%     endfor %}
+{%   else %}
+{{ key }}{% if param != '' %} {{ param }}{% endif %}
+
+{%   endif %}
+{% endfor %}
+
+<ca>
+{{ ca_cert.content | b64decode }}
+</ca>
+
+<tls-auth>
+{{ tls_auth_key.content | b64decode }}
+</tls-auth>
+
+<cert>
+{{ item.0.content | b64decode }}
+</cert>
+
+<key>
+{{ item.1.content | b64decode }}
+</key>
