@@ -3,6 +3,8 @@ ansible-openvpn
 
 An ansible role to install and configure OpenVPN.
 
+[![Build Status](https://travis-ci.org/Logan2211/ansible-openvpn.svg?branch=master)](https://travis-ci.org/Logan2211/ansible-openvpn)
+
 Requirements
 ------------
 
