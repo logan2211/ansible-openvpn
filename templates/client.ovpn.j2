@@ -1,8 +1,11 @@
 # {{ ansible_managed }}
 
-{% set _ = openvpn_client_config.update(openvpn_client_config_overrides) %}
+{% set openvpn_config = openvpn_base_config %}
+{% set _ = openvpn_config.update(openvpn_base_config_overrides) %}
+{% set _ = openvpn_config.update(openvpn_client_config) %}
+{% set _ = openvpn_config.update(openvpn_client_config_overrides) %}
 
-{% for i in openvpn_client_config | dictsort %}
+{% for i in openvpn_config | dictsort %}
 {%   set key = i.0 %}
 {%   set param = i.1 %}
 {%   if param is iterable and param is not string %}

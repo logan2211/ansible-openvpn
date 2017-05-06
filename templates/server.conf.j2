@@ -1,6 +1,8 @@
 # {{ ansible_managed }}
 
-{% set openvpn_config = openvpn_server_config %}
+{% set openvpn_config = openvpn_base_config %}
+{% set _ = openvpn_config.update(openvpn_base_config_overrides) %}
+{% set _ = openvpn_config.update(openvpn_server_config) %}
 {# Set dual stack if needed #}
 {% if openvpn_listen_ipv6 == 'exclusive' %}
 {%   set _ = openvpn_config.update({ 'proto': openvpn_protocol ~ '6' }) %}
