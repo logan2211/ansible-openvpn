@@ -36,10 +36,6 @@ openvpn_port: 1194
 # 'exclusive' means listen on ipv6 only.
 openvpn_listen_ipv6: yes
 
-# OpenVPN ansible inventory groups
-openvpn_servers_group: "openvpn_all"
-openvpn_clients_group: "openvpn_clients"
-
 openvpn_status_file: "{{ openvpn_config_path }}/{{ (openvpn_instance ~ '-') if openvpn_instance is defined else '' }}status.log"
 
 openvpn_rsa_bits: 2048
@@ -65,8 +61,8 @@ openvpn_ipv4_network: 192.168.250.0/24
 
 # Verify the CN of the client
 openvpn_verify_cn_enabled: no
-openvpn_verify_cn_client: "OpenVPN-Client-{{inventory_hostname}} name-prefix"
-openvpn_verify_cn_server: "OpenVPN-Server-{{inventory_hostname}} name"
+openvpn_verify_cn_client: "OpenVPN-Client-{{ inventory_hostname }} name-prefix"
+openvpn_verify_cn_server: "OpenVPN-Server-{{ inventory_hostname }} name"
 
 # Configure the OpenVPN management socket
 openvpn_management_enabled: yes
