@@ -11,7 +11,7 @@ services:
 env:
   global:
     - ANSIBLE_FORCE_COLOR=1
-    - docker_image=logan2211/docker-ci
+    - docker_image=quay.io/loganv/docker-ci
     - docker_command=/lib/systemd/systemd
     - cache_dir=$HOME/.docker
   matrix:
@@ -56,3 +56,6 @@ before_cache:
     | xargs -n 2 -t sh -c 'test -e ${cache_dir}/$1.tar.gz || docker save $0 | gzip -2 > ${cache_dir}/$1.tar.gz'
 notifications:
   email: false
+  slack:
+    rooms:
+      secure: Onrfs75kjP96HblpRn6jaePXBw27eWjC7+JJ6syjBHgGOCY8kCl69TSlqd5xPx9fTebHcAzfYNKCj2YlLNK0vkEC2LCCkeHUcdvBKB4oa1ykJq+vA579IWb3i7w6RtBvwK6PA6xU8sSgg9DH2V0jxvgj5yLGU7eNC3qPACci2lEnfd/RimHi5NJVneQ0cTWHzXxlUZOkFu0/7aSoDwsk74ZX+FbDfZWDhWHqeWqAuyZ8PjsOc8PbJ41swa/3fQwG6RrD9PA3dm2a9u0hmRC+AeE7MGEx5S27wQsM9a1RHTzQ7//6RInUCbVrX26dlO0ifRG/1MPCGwD5TQGiXiNNuX/8NQEZaghj0k1ZJAM6GOAFuDMaYCb1Khh5Ooi7JDTgvg7ZgIWRhCdNmYaHc4S+4aZLeyoBbKjMWMfdpg6mXl3RG8fcf8gjI0rVQLinnJXlq4nKKvZ6AIbk6ueAeFsXmuCLoTX9hhZfzE8Ah8tRjkK46R8ab0eoOT2CB67vOqrQ5PJKyYYT36lOQSO0e25UbcKTi070QDHIxLzi4fFldHvZ7mhlXoeyXqMs/JhJwM67n89eR/Kf99/qtGW5nK65AvOI7xZlxbfrM8ArqC05NkIshFmnc+LbAsTOxvjSfkjtFWgFl6YPx0K156N2zEikYyKVxV7HgEAwXSpULtNuqL8=
