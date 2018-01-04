@@ -45,3 +45,6 @@
   with_together:
     - "{{ client_certs.results }}"
     - "{{ client_keys.results }}"
+  # No log is specified to prevent the with_together parameters (ssl keys) from
+  # being outputted to the console by ansible.
+  no_log: yes
