@@ -1,5 +1,5 @@
 ---
-# Copyright 2017, Logan Vig <logan2211@gmail.com>
+# Copyright 2018, Logan Vig <logan2211@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# GPG Keys
-openvpn_gpg_keys:
-  - key_name: 'openvpn'
-    keyserver: 'hkp://keyserver.ubuntu.com:80'
-    fallback_keyserver: 'hkp://p80.pool.sks-keyservers.net:80'
-    hash_id: '0x8E6DA8B4E158C569'
-
 # Packages
 openvpn_required_distro_packages:
   - debconf-utils
@@ -30,11 +23,3 @@ openvpn_distro_packages:
 
 openvpn_user: nobody
 openvpn_group: nogroup
-
-# Repositories
-openvpn_repo_version: stable
-openvpn_repo_url: "http://build.openvpn.net/debian/openvpn/{{ openvpn_repo_version }}"
-openvpn_repo:
-  repo: "deb {{ openvpn_repo_url }} {{ ansible_distribution_release }} main"
-  state: present
-  filename: OpenVPN
