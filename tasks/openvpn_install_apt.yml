@@ -48,6 +48,7 @@
     repo: "{{ openvpn_repo.repo }}"
     filename: "{{ openvpn_repo.filename | default(omit) }}"
     state: "{{ openvpn_repo.state }}"
+  when: openvpn_repo is defined
   register: add_repos
   until: add_repos | success
   retries: 5

@@ -5,10 +5,12 @@ An ansible role to install and configure OpenVPN.
 
 [![Build Status](https://travis-ci.org/logan2211/ansible-openvpn.svg?branch=master)](https://travis-ci.org/logan2211/ansible-openvpn)
 
-Requirements
+Supported OS
 ------------
 
-Ubuntu 16.04 or RHEL/CentOS 7
+- Ubuntu 16.04
+- Ubuntu 18.04
+- RHEL/CentOS 7
 
 Example Playbook
 ----------------
