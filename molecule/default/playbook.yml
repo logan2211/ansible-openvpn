@@ -45,7 +45,7 @@
     openvpn_clients:
       - testclient1
       - testclient2
-    test_openvpn_use_pregenerated_dh: yes
+    test_openvpn_use_pregenerated_dh: true
 
 - name: Test the OpenVPN client connection
   hosts: openvpn_clients

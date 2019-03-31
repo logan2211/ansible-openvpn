@@ -60,7 +60,7 @@
   apt:
     name: "{{ item }}"
     state: "{{ openvpn_package_state }}"
-    update_cache: yes
+    update_cache: true
     cache_valid_time: "{{ cache_timeout }}"
   with_items: "{{ openvpn_required_distro_packages }}"
 
@@ -68,6 +68,6 @@
   apt:
     name: "{{ item }}"
     state: "{{ openvpn_package_state }}"
-    update_cache: yes
+    update_cache: true
     cache_valid_time: "{{ (add_repos | changed) | ternary('0', cache_timeout) }}"
   with_items: "{{ openvpn_distro_packages }}"
