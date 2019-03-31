@@ -22,7 +22,7 @@
     -keyout {{ openvpn_key_path }}/server.key
     -out {{ openvpn_key_path }}/server.csr
     -days {{ openvpn_server_cert_days }}
-    -subj /CN=OpenVPN-Server-{{inventory_hostname}}/
+    -subj /CN=OpenVPN-Server-{{ inventory_hostname }}/
   args:
     creates: "{{ openvpn_key_path }}/server.csr"
   changed_when: false

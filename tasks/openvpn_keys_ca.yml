@@ -24,7 +24,7 @@
     -out {{ openvpn_key_path }}/ca.crt
     -days {{ openvpn_ca_cert_days }}
     -sha256
-    -subj /CN=OpenVPN-CA-{{inventory_hostname}}/
+    -subj /CN=OpenVPN-CA-{{ inventory_hostname }}/
   args:
     creates: "{{ openvpn_key_path }}/ca.crt"
   changed_when: false
