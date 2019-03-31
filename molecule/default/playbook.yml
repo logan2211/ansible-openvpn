@@ -49,6 +49,11 @@
 
 - name: Test the OpenVPN client connection
   hosts: openvpn_clients
+  handlers:
+    - name: Restart OpenVPN client
+      service:
+        name: 'openvpn@client.service'
+        state: restarted
   tasks:
     - name: Install OpenVPN in the client
       package:
@@ -57,10 +62,8 @@
       copy:
         content: "{{ hostvars[groups['openvpn_servers'][0]].test_client_config.content | b64decode }}"
         dest: /etc/openvpn/client.conf
-    - name: Start the OpenVPN client
-      service:
-        name: 'openvpn@client.service'
-        state: restarted
+      notify:
+        - Restart OpenVPN client
   post_tasks:
     - name: Ping the OpenVPN server over the tunnel
       command: >
