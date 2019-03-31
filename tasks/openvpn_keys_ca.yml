@@ -34,10 +34,18 @@
     path: "{{ openvpn_key_path }}/ca.key"
     mode: '0600'
 
+# NOTE(logan): Used since file module "touch" state is not idempotent
+# See https://github.com/ansible/ansible/issues/30226#issuecomment-328953366
+# This does not assert ownership if the file already exists
+# TODO(logan): After ansible 2.7 is min_supported_version this can be adjusted
+# back to using the file module with the access_time and modification_time
+# parameters set to 'preserve'
+# See https://github.com/ansible/ansible/issues/30226#issuecomment-433643224
 - name: Create the index.txt and CRL files
-  file:
-    path: "{{ item }}"
-    state: touch
+  copy:
+    dest: "{{ item }}"
+    content: ''
+    force: false
     owner: root
     group: root
   notify:
