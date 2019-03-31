@@ -35,9 +35,10 @@
     mode: '0600'
 
 - name: Create the index.txt and CRL files
-  file:
-    path: "{{ item }}"
-    state: touch
+  copy:
+    dest: "{{ item }}"
+    content: ''
+    force: false
     owner: root
     group: root
   notify:
