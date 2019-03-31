@@ -1,28 +1,33 @@
+---
+dist: xenial
 language: python
-# Test this later.
 cache:
   timeout: 3600
   pip: true
   directories:
     - $HOME/.docker
-# cache: pip
 services:
   - docker
 
+# Distros
 _ubuntu_xenial_build: &ubuntu_xenial_build
   docker_image_tag: ubuntu-xenial
   CACHE_NAME: xenial
-  TOXENV: functional_stable
 
 _ubuntu_bionic_build: &ubuntu_bionic_build
   docker_image_tag: ubuntu-bionic
   CACHE_NAME: bionic
-  TOXENV: functional_stable
 
 _centos_build: &centos_build
   docker_image_tag: centos-7
   CACHE_NAME: cent7
-  TOXENV: functional_stable
+
+# Ansible versions
+_ansible_25_build: &ansible_25_build
+  ansible_version: "'ansible>=2.5,<2.6'"
+
+_ansible_26_build: &ansible_26_build
+  ansible_version: "'ansible>=2.6,<2.7'"
 
 env:
   global:
@@ -30,43 +35,31 @@ env:
     - docker_image=quay.io/loganv/docker-ci
     - docker_command=/lib/systemd/systemd
     - cache_dir=$HOME/.docker
+    - ansible_version=ansible
 
 matrix:
   fast_finish: true
   include:
-    - env:
-        TOXENV: linters
-        CACHE_NAME: linters
-    # ANSIBLE 2.3
-    - env:
-        <<: *ubuntu_xenial_build
-        TOXENV: functional_2.3
-    - env:
-        <<: *ubuntu_bionic_build
-        TOXENV: functional_2.3
-    - env:
-        <<: *centos_build
-        TOXENV: functional_2.3
-    # ANSIBLE 2.4
-    - env:
-        <<: *ubuntu_xenial_build
-        TOXENV: functional_2.4
-    - env:
-        <<: *ubuntu_bionic_build
-        TOXENV: functional_2.4
-    - env:
-        <<: *centos_build
-        TOXENV: functional_2.4
     # ANSIBLE 2.5
     - env:
         <<: *ubuntu_xenial_build
-        TOXENV: functional_2.5
+        <<: *ansible_25_build
     - env:
         <<: *ubuntu_bionic_build
-        TOXENV: functional_2.5
+        <<: *ansible_25_build
     - env:
         <<: *centos_build
-        TOXENV: functional_2.5
+        <<: *ansible_25_build
+    # ANSIBLE 2.6
+    - env:
+        <<: *ubuntu_xenial_build
+        <<: *ansible_26_build
+    - env:
+        <<: *ubuntu_bionic_build
+        <<: *ansible_26_build
+    - env:
+        <<: *centos_build
+        <<: *ansible_26_build
     # ANSIBLE STABLE
     - env:
         <<: *ubuntu_xenial_build
@@ -80,11 +73,9 @@ before_install:
   - if [[ -d ${cache_dir} ]]; then ls ${cache_dir}/*.tar.gz | xargs -I {file} sh -c "zcat {file} | docker load"; fi
   - if [[ -n ${docker_image_tag} ]]; then docker pull ${docker_image}:${docker_image_tag}; fi
 install:
-  - pip install tox
-before_script:
-  - curl -o ${PWD}/tox.ini https://gist.githubusercontent.com/Logan2211/c5f38423b085fbea78392f1ee10700d5/raw/tox.ini
+  - pip install -r test-requirements.txt ${ansible_version}
 script:
-  - tox
+  - molecule test
 before_cache:
   # Save tagged docker images
   - >
@@ -94,4 +85,5 @@ notifications:
   email: false
   slack:
     rooms:
+      # yamllint disable-line rule:line-length
       secure: Onrfs75kjP96HblpRn6jaePXBw27eWjC7+JJ6syjBHgGOCY8kCl69TSlqd5xPx9fTebHcAzfYNKCj2YlLNK0vkEC2LCCkeHUcdvBKB4oa1ykJq+vA579IWb3i7w6RtBvwK6PA6xU8sSgg9DH2V0jxvgj5yLGU7eNC3qPACci2lEnfd/RimHi5NJVneQ0cTWHzXxlUZOkFu0/7aSoDwsk74ZX+FbDfZWDhWHqeWqAuyZ8PjsOc8PbJ41swa/3fQwG6RrD9PA3dm2a9u0hmRC+AeE7MGEx5S27wQsM9a1RHTzQ7//6RInUCbVrX26dlO0ifRG/1MPCGwD5TQGiXiNNuX/8NQEZaghj0k1ZJAM6GOAFuDMaYCb1Khh5Ooi7JDTgvg7ZgIWRhCdNmYaHc4S+4aZLeyoBbKjMWMfdpg6mXl3RG8fcf8gjI0rVQLinnJXlq4nKKvZ6AIbk6ueAeFsXmuCLoTX9hhZfzE8Ah8tRjkK46R8ab0eoOT2CB67vOqrQ5PJKyYYT36lOQSO0e25UbcKTi070QDHIxLzi4fFldHvZ7mhlXoeyXqMs/JhJwM67n89eR/Kf99/qtGW5nK65AvOI7xZlxbfrM8ArqC05NkIshFmnc+LbAsTOxvjSfkjtFWgFl6YPx0K156N2zEikYyKVxV7HgEAwXSpULtNuqL8=
