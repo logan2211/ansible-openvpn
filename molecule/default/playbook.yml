@@ -1,21 +1,5 @@
 ---
-# Copyright 2017, Logan Vig <logan2211@gmail.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-- include: test-create-containers.yml
-
-- name: Playbook for role testing
+- name: Converge
   hosts: openvpn_servers
   pre_tasks:
     - name: Ensure the openvpn key directory exists
@@ -29,7 +13,7 @@
         dest: "{{ openvpn_key_path }}/dh.pem"
       when: test_openvpn_use_pregenerated_dh | default('no') | bool
   roles:
-    - role: "{{ rolename | basename }}"
+    - role: "{{ playbook_dir | dirname | dirname | basename }}"
   post_tasks:
     - name: Check the OpenVPN key file and store permissions
       stat:
@@ -57,11 +41,19 @@
     - name: Set the ping test IP
       set_fact:
         test_ping_ip: "{{ openvpn_ipv4_network | ipaddr(1) | ipaddr('address') }}"
-  vars_files:
-    - test-vars.yml
+  vars:
+    openvpn_clients:
+      - testclient1
+      - testclient2
+    test_openvpn_use_pregenerated_dh: true
 
 - name: Test the OpenVPN client connection
   hosts: openvpn_clients
+  handlers:
+    - name: Restart OpenVPN client
+      service:
+        name: 'openvpn@client.service'
+        state: restarted
   tasks:
     - name: Install OpenVPN in the client
       package:
@@ -70,10 +62,8 @@
       copy:
         content: "{{ hostvars[groups['openvpn_servers'][0]].test_client_config.content | b64decode }}"
         dest: /etc/openvpn/client.conf
-    - name: Start the OpenVPN client
-      service:
-        name: 'openvpn@client.service'
-        state: restarted
+      notify:
+        - Restart OpenVPN client
   post_tasks:
     - name: Ping the OpenVPN server over the tunnel
       command: >

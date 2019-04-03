@@ -60,12 +60,12 @@
   apt:
     name: "{{ openvpn_required_distro_packages }}"
     state: "{{ openvpn_package_state }}"
-    update_cache: yes
+    update_cache: true
     cache_valid_time: "{{ cache_timeout }}"
 
 - name: Install the OpenVPN OS Packages
   apt:
     name: "{{ openvpn_distro_packages }}"
     state: "{{ openvpn_package_state }}"
-    update_cache: yes
+    update_cache: true
     cache_valid_time: "{{ (add_repos | changed) | ternary('0', cache_timeout) }}"

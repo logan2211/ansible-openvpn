@@ -24,8 +24,10 @@ openvpn_package_state: "latest"
 # Conf path should normally not be changed
 openvpn_config_path: /etc/openvpn
 
-openvpn_config_file: "{{ openvpn_config_path }}/openvpn{{ ('-' ~ openvpn_instance) if openvpn_instance is defined else '' }}.conf"
-openvpn_systemd_unit: "openvpn@openvpn{{ ('-' ~ openvpn_instance) if openvpn_instance is defined else '' }}.service"
+openvpn_config_file: "{{ openvpn_config_path }}/openvpn{{
+  ('-' ~ openvpn_instance) if openvpn_instance is defined else '' }}.conf"
+openvpn_systemd_unit: "openvpn@openvpn{{
+  ('-' ~ openvpn_instance) if openvpn_instance is defined else '' }}.service"
 
 # Key storage path
 openvpn_key_path: /var/lib/openvpn
@@ -34,9 +36,10 @@ openvpn_protocol: udp
 openvpn_port: 1194
 # IPv6 listen can be yes, no, or exclusive
 # 'exclusive' means listen on ipv6 only.
-openvpn_listen_ipv6: yes
+openvpn_listen_ipv6: true
 
-openvpn_status_file: "{{ openvpn_config_path }}/{{ (openvpn_instance ~ '-') if openvpn_instance is defined else '' }}status.log"
+openvpn_status_file: "{{ openvpn_config_path }}/{{
+  (openvpn_instance ~ '-') if openvpn_instance is defined else '' }}status.log"
 
 openvpn_rsa_bits: 2048
 
@@ -60,12 +63,12 @@ openvpn_client_cert_days: "{{ openvpn_cert_days }}"
 openvpn_ipv4_network: 192.168.250.0/24
 
 # Verify the CN of the client
-openvpn_verify_cn_enabled: no
+openvpn_verify_cn_enabled: false
 openvpn_verify_cn_client: "OpenVPN-Client-{{ inventory_hostname }} name-prefix"
 openvpn_verify_cn_server: "OpenVPN-Server-{{ inventory_hostname }} name"
 
 # Configure the OpenVPN management socket
-openvpn_management_enabled: yes
+openvpn_management_enabled: true
 openvpn_management_sock: /var/run/openvpn/management.sock
 openvpn_management_bind: "{{ openvpn_management_sock }} unix"
 openvpn_management_user: root
@@ -81,7 +84,7 @@ openvpn_management_user: root
 openvpn_clients: []
 
 # Enables generation of .ovpn client configurations for managed clients
-openvpn_clients_config_generate: yes
+openvpn_clients_config_generate: true
 openvpn_clients_config_path: "{{ openvpn_key_path }}"
 
 ### Configurations are generated using the following override precedence:
