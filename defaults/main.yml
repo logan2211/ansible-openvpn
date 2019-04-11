@@ -69,7 +69,8 @@ openvpn_verify_cn_server: "OpenVPN-Server-{{ inventory_hostname }} name"
 
 # Configure the OpenVPN management socket
 openvpn_management_enabled: true
-openvpn_management_sock: /var/run/openvpn/management.sock
+openvpn_management_sock: "/var/run/openvpn/{{
+  (openvpn_instance ~ '-') if openvpn_instance is defined else '' }}management.sock"
 openvpn_management_bind: "{{ openvpn_management_sock }} unix"
 openvpn_management_user: root
 
