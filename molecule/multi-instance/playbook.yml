@@ -1,0 +1,80 @@
+---
+- name: Converge
+  hosts: openvpn_servers
+  pre_tasks:
+    - name: Ensure the openvpn key directory exists
+      file:
+        name: "{{ test_openvpn_dh_path | dirname }}"
+        state: directory
+        mode: '0700'
+    - name: Drop the pregenerated DH params
+      copy:
+        src: "{{ playbook_dir }}/../default/files/dh.pem"
+        dest: "{{ test_openvpn_dh_path }}"
+  tasks:
+    - name: Deploy openvpn instances
+      include_role:
+        name: "{{ playbook_dir | dirname | dirname | basename }}"
+        public: true
+      with_items: "{{ openvpn_instances }}"
+      loop_control:
+        loop_var: instance_loop
+      vars:
+        openvpn_instance: "{{ instance_loop.name }}"
+        openvpn_port: "{{ instance_loop.port }}"
+        openvpn_ipv4_network: "{{ instance_loop.network }}"
+  post_tasks:
+    - name: Check the OpenVPN key file and store permissions
+      stat:
+        path: "{{ item.path }}"
+      failed_when: file_stat.stat.mode != item.mode
+      with_items:
+        - path: "{{ openvpn_key_path }}"
+          mode: '0700'
+        - path: "{{ openvpn_key_path }}/ca.key"
+          mode: '0600'
+        - path: "{{ openvpn_key_path }}/server.key"
+          mode: '0600'
+        - path: "{{ openvpn_key_path }}/tls-auth.key"
+          mode: '0600'
+      register: file_stat
+    - name: Verify the OpenVPN process is running
+      command: pgrep openvpn
+      failed_when: openvpn_pid.rc != 0
+      register: openvpn_pid
+      changed_when: false
+    - name: Fetch the openvpn client configuration
+      slurp:
+        src: "{{ openvpn_key_path }}/{{ openvpn_clients[0] }}.ovpn"
+      register: test_client_config
+    - name: Set the ping test IP
+      set_fact:
+        test_ping_ip: "{{ openvpn_ipv4_network | ipaddr(1) | ipaddr('address') }}"
+  vars:
+    openvpn_clients:
+      - testclient1
+      - testclient2
+    test_openvpn_dh_path: /var/lib/openvpn/dh.pem
+
+- name: Test the OpenVPN client connection
+  hosts: openvpn_clients
+  handlers:
+    - name: Restart OpenVPN client
+      service:
+        name: 'openvpn@client.service'
+        state: restarted
+  tasks:
+    - name: Install OpenVPN in the client
+      package:
+        name: openvpn
+    - name: Drop the client configuration
+      copy:
+        content: "{{ hostvars[groups['openvpn_servers'][0]].test_client_config.content | b64decode }}"
+        dest: /etc/openvpn/client.conf
+      notify:
+        - Restart OpenVPN client
+  post_tasks:
+    - name: Ping the OpenVPN server over the tunnel
+      command: >
+        ping -c4 {{ hostvars[groups['openvpn_servers'][0]].test_ping_ip }}
+      changed_when: false

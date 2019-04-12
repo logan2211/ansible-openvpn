@@ -1,0 +1,50 @@
+---
+_instance_base: &instance_base
+  image: "${docker_image:-quay.io/loganv/docker-ci}:${docker_image_tag:-ubuntu-bionic}"
+  # NOTE(logan): Uncomment user arg once upstream PR is released
+  # https://github.com/metacloud/molecule/pull/1526
+  # user: root
+  command: ${docker_command:-/lib/systemd/systemd}
+  volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  capabilities:
+    - NET_ADMIN
+    - SYS_ADMIN
+  privileged: true
+  pre_build_image: true
+  networks:
+    - name: openvpn
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint:
+  name: yamllint
+  options:
+    config-file: molecule/default/yaml-lint.yml
+platforms:
+  - <<: *instance_base
+    name: ovpn_server1
+    groups:
+      - openvpn_servers
+  - <<: *instance_base
+    name: ovpn_client1
+    groups:
+      - openvpn_clients
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      stdout_callback: yaml
+  lint:
+    name: ansible-lint
+  playbooks:
+    # NOTE(logan): Use custom create playbook with user: root until upstream
+    # merges https://github.com/metacloud/molecule/pull/1526
+    # NOTE(logan): Also contains a 'devices' attribute when creating the
+    # container to allow /dev/net/tun. Molecule does not support the devices
+    # parameter, so it must be done using a custom playbook.
+    create: ../default/create.yml
+    converge: playbook.yml
+scenario:
+  name: multi-instance

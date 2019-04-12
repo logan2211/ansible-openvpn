@@ -10,15 +10,21 @@ services:
   - docker
 
 # Distros
+_distro_base: &distro_base
+  scenario_name: default
+
 _ubuntu_xenial_build: &ubuntu_xenial_build
+  <<: *distro_base
   docker_image_tag: ubuntu-xenial
   CACHE_NAME: xenial
 
 _ubuntu_bionic_build: &ubuntu_bionic_build
+  <<: *distro_base
   docker_image_tag: ubuntu-bionic
   CACHE_NAME: bionic
 
 _centos_build: &centos_build
+  <<: *distro_base
   docker_image_tag: centos-7
   CACHE_NAME: cent7
 
@@ -50,6 +56,10 @@ matrix:
     - env:
         <<: *centos_build
         <<: *ansible_25_build
+    - env:
+        <<: *ubuntu_bionic_build
+        <<: *ansible_25_build
+        scenario_name: multi-instance
     # ANSIBLE 2.6
     - env:
         <<: *ubuntu_xenial_build
@@ -60,6 +70,10 @@ matrix:
     - env:
         <<: *centos_build
         <<: *ansible_26_build
+    - env:
+        <<: *ubuntu_bionic_build
+        <<: *ansible_26_build
+        scenario_name: multi-instance
     # ANSIBLE STABLE
     - env:
         <<: *ubuntu_xenial_build
@@ -67,6 +81,9 @@ matrix:
         <<: *ubuntu_bionic_build
     - env:
         <<: *centos_build
+    - env:
+        <<: *ubuntu_bionic_build
+        scenario_name: multi-instance
 
 before_install:
   # Load cached docker images
@@ -75,7 +92,7 @@ before_install:
 install:
   - pip install -r test-requirements.txt ${ansible_version}
 script:
-  - molecule test
+  - molecule test -s ${scenario_name}
 before_cache:
   # Save tagged docker images
   - >
