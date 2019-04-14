@@ -23,6 +23,9 @@ openvpn_gpg_keys:
 # Packages
 openvpn_required_distro_packages:
   - debconf-utils
+  # OpenVPN upstream packages postinst script requires 'file'
+  # to determine if /sbin/init is a link to systemd
+  - file
 
 openvpn_distro_packages:
   - openvpn
