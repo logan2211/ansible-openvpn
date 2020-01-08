@@ -26,6 +26,8 @@
       retries: 5
       delay: 2
       with_items: "{{ openvpn_gpg_keys }}"
+      loop_control:
+        label: "{{ item.hash_id }}"
       tags:
         - openvpn-apt-keys
   rescue:
