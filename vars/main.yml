@@ -17,4 +17,5 @@
 cache_timeout: 600
 
 # GPG Keys
-openvpn_gpg_keys: []
+openvpn_gpg_keys_default: []
+openvpn_gpg_keys: "{{ openvpn_gpg_keys_override | default(openvpn_gpg_keys_default) }}"

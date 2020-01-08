@@ -14,7 +14,7 @@
 # limitations under the License.
 
 # GPG Keys
-openvpn_gpg_keys:
+openvpn_gpg_keys_default:
   - key_name: 'openvpn'
     keyserver: 'hkp://keyserver.ubuntu.com:80'
     fallback_keyserver: 'hkp://p80.pool.sks-keyservers.net:80'
