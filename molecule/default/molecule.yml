@@ -48,3 +48,16 @@ provisioner:
     converge: playbook.yml
 scenario:
   name: default
+  test_sequence:
+    - lint
+    - dependency
+    - cleanup
+    - destroy
+    - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - side_effect
+    - cleanup
+    - destroy
