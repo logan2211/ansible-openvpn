@@ -1,4 +1,19 @@
 ---
+- name: Detect python interpreter
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Find the remote python interpreter
+      raw: '(which python3 || which python) 2>/dev/null'
+      retries: 5
+      delay: 10
+      until: find_python is success
+      register: find_python
+      changed_when: false
+    - name: Set ansible python interpreter
+      set_fact:
+        ansible_python_interpreter: "{{ find_python.stdout.splitlines()[-1] | trim }}"
+
 - name: Converge
   hosts: openvpn_servers
   pre_tasks:
