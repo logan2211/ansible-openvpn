@@ -68,4 +68,4 @@
     name: "{{ openvpn_distro_packages }}"
     state: "{{ openvpn_package_state }}"
     update_cache: true
-    cache_valid_time: "{{ (add_repos | changed) | ternary('0', cache_timeout) }}"
+    cache_valid_time: "{{ (add_repos is changed) | ternary('0', cache_timeout) }}"
