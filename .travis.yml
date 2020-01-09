@@ -23,11 +23,11 @@ _centos_build: &centos_build
   CACHE_NAME: cent7
 
 # Ansible versions
-_ansible_25_build: &ansible_25_build
-  ansible_version: "'ansible>=2.5,<2.6'"
+_ansible_27_build: &ansible_27_build
+  ansible_version: "'ansible>=2.7,<2.8'"
 
-_ansible_26_build: &ansible_26_build
-  ansible_version: "'ansible>=2.6,<2.7'"
+_ansible_28_build: &ansible_28_build
+  ansible_version: "'ansible>=2.8,<2.9'"
 
 env:
   global:
@@ -43,23 +43,23 @@ matrix:
     # ANSIBLE 2.5
     - env:
         <<: *ubuntu_xenial_build
-        <<: *ansible_25_build
+        <<: *ansible_27_build
     - env:
         <<: *ubuntu_bionic_build
-        <<: *ansible_25_build
+        <<: *ansible_27_build
     - env:
         <<: *centos_build
-        <<: *ansible_25_build
+        <<: *ansible_27_build
     # ANSIBLE 2.6
     - env:
         <<: *ubuntu_xenial_build
-        <<: *ansible_26_build
+        <<: *ansible_28_build
     - env:
         <<: *ubuntu_bionic_build
-        <<: *ansible_26_build
+        <<: *ansible_28_build
     - env:
         <<: *centos_build
-        <<: *ansible_26_build
+        <<: *ansible_28_build
     # ANSIBLE STABLE
     - env:
         <<: *ubuntu_xenial_build
